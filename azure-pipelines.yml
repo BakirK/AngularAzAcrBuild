@@ -1,0 +1,26 @@
+resources:
+- repo: self
+
+variables:
+  dockerfilePath: '$(Build.SourcesDirectory)/angular16/acr-blog'
+  imageName: 'angularacrbuild'
+  tag: '$(Build.BuildId)'
+  AZURE_SECRET: "<Your Service Principal Secret>"
+  AZURE_TENANT_ID: "<Your Azure Tenant ID>"
+  APP_ID: "<Your Service Principal ID>"
+  DockerRegistry: "<Name of your Azure Container Registry>"
+jobs:
+- job: Build
+  displayName: Build
+  pool: 
+    vmImage: 'windows-2022'
+  steps:
+  - task: PowerShell@2
+    inputs:
+      targetType: 'inline'
+      workingDirectory: '$(dockerfilePath)'
+      script: |
+        az login --service-principal -u $(APP_ID) -p $(AZURE_SECRET) --tenant $(AZURE_TENANT_ID)
+        az acr login --name $(DockerRegistry)
+        
+        az acr build --registry $(DockerRegistry) --image "$(imageName):$(tag)" .
